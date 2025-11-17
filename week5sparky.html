@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Week 5 — DOM Update (Sparky the Singularity)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --mauve-1:#A89CA5;
+      --mauve-2:#C7BAC3;
+      --rose-1:#D6B2B6;
+      --rose-2:#E6C9CC;
+      --ink:#2E2A2B;
+      --paper:#F8F6F7;
+      --sidebar-w: 280px;
+      --ease: 240ms ease;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);background:var(--paper);
+      font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    .app{display:flex;min-height:100dvh;overflow-x:hidden;}
+    /* ========== Sidebar ========== */
+    .sidenav{
+      position:fixed;inset:0 auto 0 0;width:var(--sidebar-w);
+      background:linear-gradient(180deg,var(--mauve-2),var(--rose-2));
+      border-right:1px solid rgba(0,0,0,.06);
+      box-shadow:2px 0 12px rgba(0,0,0,.06);
+      transform:translateX(0);transition:transform var(--ease);z-index:1000;
+      padding:20px 16px 28px;
+    }
+    .sidenav__title{margin:6px 8px 16px;font-weight:700;}
+    .sidenav a{
+      display:block;padding:10px 12px;margin:6px 4px;border-radius:10px;
+      text-decoration:none;color:#222;background:rgba(255,255,255,.55);
+      transition:filter var(--ease),transform var(--ease);
+    }
+    .sidenav a:hover{filter:brightness(1.02);transform:translateY(-1px);}
+    .app:not(.is-open) .sidenav{transform:translateX(-100%);}
+    /* ========== Topbar ========== */
+    .topbar{
+      position:sticky;top:0;z-index:900;display:flex;align-items:center;gap:12px;
+      height:56px;padding:0 12px;
+      background:linear-gradient(90deg,var(--rose-2),var(--mauve-2));
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .menu-btn{appearance:none;border:0;background:transparent;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;cursor:pointer;}
+    .menu-icon,.menu-icon::before,.menu-icon::after{
+      content:"";display:block;width:20px;height:2px;background:#333;border-radius:2px;
+      position:relative;transition:transform var(--ease),opacity var(--ease);
+    }
+    .menu-icon::before{position:absolute;transform:translateY(-6px);}
+    .menu-icon::after{position:absolute;transform:translateY(6px);}
+    .app.is-open .menu-icon{background:transparent;}
+    .app.is-open .menu-icon::before{transform:rotate(45deg);}
+    .app.is-open .menu-icon::after{transform:rotate(-45deg);}
+    .brand{font-weight:700;}
+    /* ========== Page ========== */
+    .page{flex:1;padding:20px min(6vw,48px) 56px;margin-left:var(--sidebar-w);transition:margin var(--ease);}
+    .app:not(.is-open) .page{margin-left:0;}
+    /* ========== Hero ========== */
+    .hero{
+      background:linear-gradient(145deg,var(--rose-2),var(--mauve-2));
+      border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:28px;
+      box-shadow:0 16px 40px rgba(0,0,0,.06);
+    }
+    .eyebrow{font-size:.85rem;opacity:.85;margin-bottom:4px;}
+    .hero h1{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.2rem);}
+    .tagline{opacity:.9;margin:0 0 14px;}
+    .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    .btn{
+      appearance:none;border:0;border-radius:999px;padding:10px 16px;cursor:pointer;
+      background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.08);
+      text-decoration:none;color:#222;font-weight:600;
+      transition:transform var(--ease),filter var(--ease);
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.02);}
+    .btn.outline{background:transparent;border:1.5px solid rgba(0,0,0,.2);}
+    /* ========== Sections ========== */
+    section{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 8px 24px rgba(0,0,0,.04);}
+    section h2{margin-top:0}
+    .muted{opacity:.85}
+    .grid{display:grid;gap:12px}
+    .card{background:linear-gradient(180deg,#ffffff, #fbf9fa);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px;}
+    @media (min-width:720px){ .grid-2{grid-template-columns:1fr 1fr} }
+    @media (min-width:980px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
+    /* ========== Mobile overlay ========== */
+    @media (max-width:768px){
+      .sidenav{width:100vw;max-width:none;background:linear-gradient(180deg,var(--mauve-2),var(--rose-1));}
+      .page{margin-left:0;}
+      body.menu-lock{overflow:hidden;}
+    }
+    /* small helpers */
+    .kvs{display:grid;grid-template-columns:140px 1fr;gap:6px 10px;align-items:start}
+    .kvs dt{font-weight:700;opacity:.85}
+    .kvs dd{margin:0}
+  </style>
+</head>
+<body>
+  <div id="app" class="app is-open">
+    <!-- Side Navigation -->
+    <nav class="sidenav" aria-label="Side navigation">
+      <div class="sidenav__title">Menu</div>
+      <a href="#about">About Sparky</a>
+      <a href="#specs">Quick Facts</a>
+      <a href="#love">Why We Love Him</a>
+      <a href="#day">A Perfect Day</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <main class="page">
+      <!-- Topbar -->
+      <header class="topbar">
+        <button id="menuBtn" class="menu-btn" aria-label="Toggle menu" aria-expanded="true" aria-controls="app">
+          <span class="menu-icon" aria-hidden="true"></span>
+        </button>
+        <div class="brand">Sparky the Singularity</div>
+      </header>
+
+      <!-- Hero -->
+      <section class="hero" id="top">
+        <div class="eyebrow">Warm • Curious • Kind</div>
+        <h1>Sparky the Singularity</h1>
+        <p class="tagline">Warm. Curious. A heartbeat wrapped in curls.</p>
+        <div class="cta">
+          <a class="btn" href="#about">Learn more</a>
+          <a class="btn outline" href="#contact">Say hello</a>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section id="about">
+        <h2>About Sparky</h2>
+        <p class="muted">
+          Sparky is a sweet and curious Labradoodle with a heart full of joy. He loves to sit by the window
+          and watch the birds flutter and the deer wander by. His soft curls bounce when he runs, and his gentle
+          eyes seem to understand everything you say. Sparky is calm, kind, and always ready for a cuddle — the
+          perfect companion who fills every day with warmth and laughter.
+        </p>
+      </section>
+
+      <!-- Quick Facts / Specs -->
+      <section id="specs">
+        <h2>Quick Facts</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <dl class="kvs">
+              <dt>Favorite spot</dt><dd>Sunny window</dd>
+              <dt>Personality</dt><dd>Gentle &amp; playful</dd>
+              <dt>Superpower</dt><dd>Instant calm hugs</dd>
+              <dt>Hobbies</dt><dd>Bird-watching, napping</dd>
+            </dl>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Sparky in Three Lines</h3>
+            <ul style="margin:6px 0 0 18px;">
+              <li>Warm presence, cool head.</li>
+              <li>Listens first, wags second.</li>
+              <li>Turns chaos into comfort.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why We Love Him -->
+      <section id="love">
+        <h2>Why we love him</h2>
+        <ul>
+          <li>He brings everyone together — a true team mascot.</li>
+          <li>He listens first, then nudges your hand like a coach.</li>
+          <li>He keeps the routine: walk, water, treat, nap, repeat.</li>
+        </ul>
+      </section>
+
+      <!-- A Perfect Day -->
+      <section id="day">
+        <h2>A Perfect Day with Sparky</h2>
+        <div class="grid grid-3">
+          <div class="card"><strong>Morning:</strong> Window patrol and a quick stretch before breakfast.</div>
+          <div class="card"><strong>Afternoon:</strong> Sunbeam nap, occasional bird commentary.</div>
+          <div class="card"><strong>Evening:</strong> Neighborhood stroll, then couch cuddles and a calm, steady heartbeat.</div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section id="contact">
+        <h2>Contact</h2>
+        <p class="muted">Want to meet Sparky or send him a treat? Ping us here — he’ll wag back.</p>
+        <form onsubmit="event.preventDefault(); alert('Sparky says: woof! Thanks for the message 🐾');">
+          <div class="grid grid-2">
+            <label class="card">
+              <div style="font-weight:600;margin-bottom:6px;">Your name</div>
+              <input required name="name" aria-label="Your name" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2)">
+            </label>
+            <label class="card">
+              <div style="font-weight:600;margin-bottom:6px;">Email</div>
+              <input type="email" required name="email" aria-label="Your email" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2)">
+            </label>
+          </div>
+          <label class="card" style="display:block;margin-top:12px;">
+            <div style="font-weight:600;margin-bottom:6px;">Message</div>
+            <textarea required name="msg" rows="4" aria-label="Message" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2)"></textarea>
+          </label>
+          <div class="cta" style="margin-top:12px;">
+            <button class="btn" type="submit">Send</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ======= GLOBAL BOOLEAN =======
+    let isOpen = true;
+
+    const app = document.getElementById('app');
+    const btn = document.getElementById('menuBtn');
+
+    function renderMenuState(){
+      if(isOpen){
+        app.classList.add('is-open');
+        btn.setAttribute('aria-expanded','true');
+        document.body.classList.toggle('menu-lock', window.matchMedia('(max-width: 768px)').matches);
+      }else{
+        app.classList.remove('is-open');
+        btn.setAttribute('aria-expanded','false');
+        document.body.classList.remove('menu-lock');
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      isOpen = !isOpen;
+      renderMenuState();
+    });
+
+    // Start: closed on mobile, open on desktop
+    function setInitialByViewport(){
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      isOpen = !isMobile;
+      renderMenuState();
+    }
+    setInitialByViewport();
+    window.addEventListener('resize', () => {
+      clearTimeout(window.__menuRsz);
+      window.__menuRsz = setTimeout(setInitialByViewport, 120);
+    });
+
+    // Close overlay after clicking a nav link on mobile
+    document.querySelectorAll('.sidenav a').forEach(a => {
+      a.addEventListener('click', () => {
+        if (window.matchMedia('(max-width: 768px)').matches){
+          isOpen = false; renderMenuState();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
